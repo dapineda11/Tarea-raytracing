@@ -1,0 +1,192 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+typedef struct VEC3_T VEC3_T;
+struct VEC3_T
+{
+	double x;
+	double y;
+	double z;
+};
+
+
+
+typedef struct RAY_T RAY_T;
+struct RAY_T
+{
+	VEC3_T origin;
+	VEC3_T dir;
+};
+
+
+typedef struct SPH_T SPH_T;
+struct SPH_T
+{
+	VEC3_T center;
+	double radius;
+};
+
+int Vec_Print(VEC3_T );
+int Intersection_Ray_Sphere (RAY_T,SPH_T,VEC3_T *);
+int Vec_Create(VEC3_T * ,double ,double ,double );
+VEC3_T Vec_Addition(VEC3_T ,VEC3_T );
+VEC3_T Vec_Subtract(VEC3_T ,VEC3_T );
+VEC3_T Vec_Normalize(VEC3_T );
+VEC3_T Vec_Scale (VEC3_T, double );
+double Vec_Dot_Product(VEC3_T ,VEC3_T );
+
+
+	
+static SPH_T my_sphere={{0.0,0.0,0.0},5.0};
+static RAY_T observer={{-10.0,0.0,0.0},{1.0,0.0,0.0}};
+static VEC3_T light;
+static VEC3_T intersection_point;
+
+int main()
+{
+Vec_Create(&light,0.707,0.0,-0.707);
+if(Intersection_Ray_Sphere (observer,my_sphere,&intersection_point)){
+	fprintf(stdout,"x: %f\n",intersection_point.x);
+	fprintf(stdout,"y: %f\n",intersection_point.y);
+	fprintf(stdout,"z: %f\n",intersection_point.z);
+}
+else{
+	fprintf(stdout,"no impacto\n");
+}
+
+return 0;
+}
+
+VEC3_T
+Vec_Create_v1(
+VEC3_T vector, /* In: */
+double x,  /* In: */
+double y,  /* In: */
+double z)  /* In: */
+{
+	VEC3_T tmp;
+	
+	tmp.x=x;
+	tmp.y=y;
+	tmp.z=z;
+	return tmp;
+}
+
+int 
+Vec_Create(
+VEC3_T *ptr, /* In/Out: */
+double x, /* In: */
+double y, /* In: */
+double z) /* In: */
+{
+	
+	ptr->x=x; //*ptr.x=x;
+	ptr->y=y; //*ptr.y=y;
+	ptr->z=z; //*ptr.z=z;
+	return 1;
+}
+
+VEC3_T Vec_Addition(VEC3_T sumando_1, VEC3_T sumando_2)
+{
+	VEC3_T result;
+	
+	result.x = sumando_1.x + sumando_2.x;
+	result.y = sumando_1.y + sumando_2.y;
+	result.z = sumando_1.z + sumando_2.z;
+	return result;  
+}
+
+VEC3_T Vec_Subtract(VEC3_T minuendo, VEC3_T sustraendo)
+{
+	VEC3_T resta;  
+	resta.x = minuendo.x-sustraendo.x;
+	resta.y = minuendo.y-sustraendo.y;
+	resta.z = minuendo.z-sustraendo.z;
+	return resta; 
+}
+
+VEC3_T Vec_Normalize(VEC3_T vec)
+{	
+VEC3_T unitary;
+double mag_sqr= Vec_Dot_Product(vec,vec);
+	if(mag_sqr!=0.0)
+	{
+	double tmp = 1.0/sqrt(mag_sqr);
+	unitary=Vec_Scale(vec,tmp);
+	}
+	else
+	{
+	fprintf(stderr,"error de division por 0 \n"); 
+	exit(1);
+	}
+return unitary;	
+}
+
+VEC3_T Vec_Scale (VEC3_T vec, double factor)
+	{
+		VEC3_T result;
+	result.x = factor*vec.x; // ptr->x*=factor
+	result.y = factor*vec.y;
+	result.z = factor*vec.z;
+	return result; 
+}
+
+double Vec_Dot_Product(VEC3_T vec_1,VEC3_T vec_2)
+{
+ 
+	return vec_1.x*vec_2.x+vec_1.y+vec_2.y+vec_1.z*vec_2.z;
+}
+
+int Intersection_Ray_Sphere (RAY_T ray,SPH_T sph,VEC3_T *ptr){
+	double menor_distancia;
+	double discriminant;
+	VEC3_T voc = Vec_Subtract(ray.origin,sph.center);
+	double dir_dot_voc = Vec_Dot_Product(voc,ray.dir);
+	double temp_sqr = dir_dot_voc*dir_dot_voc;
+	double voc_sqr=Vec_Dot_Product(voc,voc);
+	double radius_sqr=sph.radius*sph.radius;
+	double voc_sqr_minus_radius_sqr= voc_sqr-radius_sqr;
+	
+	Vec_Print(voc);
+	fprintf(stderr,"%f\n",voc_sqr_minus_radius_sqr);
+	
+	if(dir_dot_voc>=0.0)
+	{
+		return(0);
+	}
+	else if(voc_sqr_minus_radius_sqr<=0.0)
+	{
+		return(0);
+	}
+	else if((discriminant = temp_sqr-dir_dot_voc+radius_sqr)<0.0)
+	{
+	    return(0);
+	}
+	else
+	{
+		double solv_1 = -voc_sqr - sqrt(discriminant);
+		double solv_2 = -voc_sqr + sqrt(discriminant);
+		if(solv_1<solv_2)
+		{
+			menor_distancia=solv_1;
+							
+		}
+		else
+		{
+			menor_distancia=solv_2;
+		}
+	VEC3_T vec_tmp = Vec_Scale(ray.dir,menor_distancia);
+	*ptr = Vec_Addition(ray.origin,vec_tmp);
+	}
+	return(1);
+}
+
+int Vec_Print(VEC3_T vec)
+{
+	fprintf(stderr,"x: %f\n",vec.x);
+	fprintf(stderr,"y: %f\n",vec.y);
+	fprintf(stderr,"z: %f\n",vec.z);
+	return(1);
+}
